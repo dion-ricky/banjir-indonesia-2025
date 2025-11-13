@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 import click
+from tqdm import tqdm
 
 from detik import DetikScraper
 from kompas import KompasScraper
@@ -91,8 +92,7 @@ def scrape_bulk(base_url: str, output: Optional[str], limit: int):
     article_urls = scraper.scrape_list_page(limit=limit)
 
     results = []
-    for i, url in enumerate(article_urls[:limit], 1):
-        click.echo(f"Scraping article {i}/{min(limit, len(article_urls))}: {url}")
+    for url in tqdm(article_urls[:limit], desc="Scraping articles", unit="article"):
         result = scraper.scrape_article(url)
         if result:
             results.append(result)
