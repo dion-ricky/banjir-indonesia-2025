@@ -6,6 +6,7 @@ from typing import Dict, List
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from tqdm import tqdm
 
 load_dotenv()
 
@@ -91,33 +92,44 @@ def main():
             print(f"Warning: {source} folder not found")
             continue
 
-        print(f"\nProcessing articles from {source}...")
         articles = load_articles(source)
         total_processed += len(articles)
 
-        for i, article in enumerate(articles, 1):
-            print(f"\nAnalyzing article {i}/{len(articles)} from {source}")
+        # Use a tqdm progress bar for per-source article processing
+        for article in tqdm(articles, desc=f"Analyzing {source}", unit="article"):
+            tqdm.write(
+                f"Processing article from {source}: {article.get('title', 'No Title')}"
+            )
 
             try:
                 analysis = analyze_article_with_openai(
-                    content=article["content"],
-                    title=article["title"],
-                    timestamp=article["timestamp"],
+                    content=article.get("content", ""),
+                    title=article.get("title", ""),
+                    timestamp=article.get("timestamp", ""),
                 )
+
+                analysis = analysis if isinstance(analysis, dict) else {}
 
                 analyzed_article = {
                     "source": source,
-                    "url": article["url"],
-                    "title": article["title"],
-                    "published_time": analysis["published_time"],
-                    "affected_areas": analysis["affected_areas"],
-                    "flood_time": analysis["flood_time"],
+                    "url": article.get("url", None),
+                    "title": article.get("title", None),
+                    "published_time": analysis.get("published_time"),
+                    "flood_severity": analysis.get(
+                        "flood_severity",
+                        "Unable to determine, LLM failed to respond properly",
+                    ),
+                    "affected_areas": analysis.get("affected_areas", []),
+                    "flood_time": analysis.get(
+                        "flood_time",
+                        "Unable to determine, LLM failed to respond properly",
+                    ),
                 }
 
                 all_analyzed_articles.append(analyzed_article)
 
             except Exception as e:
-                print(f"Error analyzing article: {str(e)}")
+                tqdm.write(f"Error analyzing article from {source}: {str(e)}")
                 continue
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
