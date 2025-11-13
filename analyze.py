@@ -26,6 +26,23 @@ def load_articles(folder: str) -> List[Dict]:
     return articles
 
 
+def skip_already_analyzed_generator():
+    analyzed_article_urls = set()
+
+    if os.path.exists("analyzed"):
+        for filename in os.listdir("analyzed"):
+            if filename.endswith(".json"):
+                with open(os.path.join("analyzed", filename), "r") as f:
+                    data = json.load(f)
+                    for article in data:
+                        if "url" in article:
+                            analyzed_article_urls.add(article["url"])
+    
+    def skip_already_analyzed(url: str) -> bool:
+        return url in analyzed_article_urls
+    return skip_already_analyzed
+
+
 def analyze_article_with_openai(content: str, title: str, timestamp: str) -> Dict:
     """
     Analyze the article content using OpenAI to extract location and time information.
@@ -80,6 +97,8 @@ def main():
     # Create analyzed directory if it doesn't exist
     os.makedirs("analyzed", exist_ok=True)
 
+    skip_already_analyzed = skip_already_analyzed_generator()
+
     # List of news source folders to process
     news_sources = ["detik", "kompas", "tribunnews"]
     all_analyzed_articles = []
@@ -97,6 +116,12 @@ def main():
 
         # Use a tqdm progress bar for per-source article processing
         for article in tqdm(articles, desc=f"Analyzing {source}", unit="article"):
+            if skip_already_analyzed(article.get("url", "")):
+                tqdm.write(
+                    f"Skipping article from {source}: {article.get('title', 'No Title')}. Reason: Already analyzed."
+                )
+                continue
+
             tqdm.write(
                 f"Processing article from {source}: {article.get('title', 'No Title')}"
             )
