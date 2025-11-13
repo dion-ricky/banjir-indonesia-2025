@@ -45,11 +45,13 @@ def analyze_article_with_openai(content: str, title: str, timestamp: str) -> Dic
     
     Please provide the following information in English:
     1. Location details (regency/city and province if mentioned)
-    2. Time or rough estimation time when it occurred based on the article content (e.g., "2025-11-09", "2025-10-01 until 2025-10-03", or "November 2025")
-    3. Article published time in ISO 8601 format
+    2. Flood severity level based on the impact ("mild" if there's minor damages, "moderate" if there's major damages, "severe" if there's casualties or major damages)
+    3. Time or rough estimation time when it occurred based on the article content (e.g., "2025-11-09", "2025-10-01 until 2025-10-03", or "November 2025")
+    4. Article published time in ISO 8601 format
     
     Format the response as a JSON with these keys:
     - affected_areas: list of dictionaries containing regency/city and province
+    - flood_severity: string indicating the severity level ("mild", "moderate", "severe")
     - flood_time: string of the time or rough estimation of when the flood occurred
     - published_time: ISO 8601 formatted timestamp of the article publication
     """
